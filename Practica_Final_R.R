@@ -33,6 +33,8 @@ for (i in 1:length(variableName))
   }
   print(label(Greenhouse_Gas_Emissions[, i]) <- paste("DESCRIPTION: ",description[i], " UNIT: ", unit[i]))
 }
+# Dimensions of the dataset
+dimGreenhouseGasEmissions <- dim(Greenhouse_Gas_Emissions)
 
 # Section d:
 # The statement says: Represent graphically co2, methane and nitrous_oxide together by country and year. Can be possible all countries or a selection of a country, according to the request made.
@@ -84,7 +86,7 @@ library(tidyr)
 summariseTable <- select(lastDecades, 1, 2, seq(6, length(names(lastDecades)), by = 1)) # The first step in this section is to reduce the dataset to get only the variables I need: all the quantitative and the ones for grouping by
 summariseTable <- na.omit(summariseTable) # The second step is to remove those observations with NA, as they can bring problems
 groupedByTable <- summariseTable %>% group_by(decade, country) %>% summarise_all(.funs = c("mean", "median", "sd", "IQR")) # Finally, apply the statistical analysis to each variable grouped by
-
+groupedByTable <- groupedByTable[, -3]
 # Section g:
 # Solving the first part of the section: see the decade variations of the average co2,methane and nitrous_oxide in the total countries
 library(dplyr)
@@ -130,7 +132,7 @@ EmissionsProgressByCountry <- function(country) {
   return(finalPlot)
 }
 
-countries <- c("Africa", "Spain", "France")
+countries <- c("China", "France")
 for (i in 1:length(countries))
 {
   pais <- countries[i]
@@ -182,10 +184,10 @@ PyramidPlotCountry <- function(decades, countri)
   dataReduction <- subset(Greenhouse_Gas_Emissions, country == countri)
   decadeSelection <- subset(dataReduction, decade > maxDecade - decades -1 & decade < maxDecade)
   decadeReducedCol <- select(decadeSelection,1,80,44,46)
-  decadeMean <- decadeReducedCol %>% group_by(country, decade) %>% summarise_all(.funs = "mean")
+  decadeMean <- decadeReducedCol %>% group_by(country, decade) %>% summarise_all(.funs = "sum")
   decadeMean$decade <- with(decadeMean, 1:dim(decadeMean)[1])
   # The second step is to make the pyramid plot and return the plot
-  PyramidPlot <- pyramid.plot(decadeMean$methane,decadeMean$nitrous_oxide, decadeMean$decade, main = paste("Methane vs Nitrous Oxide: ", country), top.labels = c("Methane", "Decade", "Nitrous Oxide"), lxcol = "blue", rxcol = "red", unit = "tonnes of CO2 equivalents per person", ppmar=c(4,2,4,2))
+  PyramidPlot <- pyramid.plot(decadeMean$methane,decadeMean$nitrous_oxide, decadeMean$decade, main = paste("Methane vs Nitrous Oxide: ", country), top.labels = c("Methane", "Decade", "Nitrous Oxide"), lxcol = "blue", rxcol = "red", unit = "million tonnes", ppmar=c(4,1,4,1), space = 0.3, gap = 1, labelcex = 1)
   print(PyramidPlot)
 }
 decades <- 15
@@ -203,7 +205,7 @@ StackedBarPlot <- function(countries, decada)
   dataCountries <- data[data$country %in% countries, ]
   dataDecade <- subset(dataCountries, decade == decada)
   dataReduction <- select(dataDecade,1,8,44,46)
-  groupBydata <- dataReduction %>% group_by(country) %>% summarise_all(.funs = "mean")
+  groupBydata <- dataReduction %>% group_by(country) %>% summarise_all(.funs = "sum")
   dataValues <- as.matrix(groupBydata[, -1])
   paises <- as.vector(groupBydata$country)
   StackedBarPlot <- barplot2(
@@ -250,7 +252,7 @@ dataReducedDecadeCountry <- function(decades, countri)
   # Once all the calculations are done, only select those where the country is the one given
   groupedByCountry <- subset(groupedBy, country == countri)
   # The second step is the calculation of the increase percentage
-  for (i in 1:length(groupedByCountry)-1)
+  for (i in 1:length(groupedByCountry))
   {
     co2_ini = as.numeric(groupedByCountry[i,3])
     co2_fin = as.numeric(groupedByCountry[i+1,3])
@@ -301,7 +303,7 @@ PredictEmissions <- function(decades, countri)
   dataReduction <- subset(Greenhouse_Gas_Emissions, country == countri)
   decadeSelection <- subset(dataReduction, decade > maxDecade - decades -1 & decade < maxDecade)
   decadeReducedCol <- select(decadeSelection,1,80,8,44,46)
-  decadeMean <- decadeReducedCol %>% group_by(decade, country) %>% summarise_all(.funs = "mean")
+  decadeMean <- decadeReducedCol %>% group_by(decade, country) %>% summarise_all(.funs = "sum")
   decadeMean$decade <- with(decadeMean, 1:dim(decadeMean)[1])
   # The second step is to make a linear regression model
   lm_co2 <- lm(co2 ~ decade, data = decadeMean)
@@ -364,8 +366,8 @@ PredictEmissionsSTAT <- function(decades, countries)
     decadesMeanFinal <- rbind(decadesMeanFinal, decadesMean)
   }
   decadesMeanFinal <- subset(decadesMeanFinal, decade >= decades)
-  decadeMeanFinalStat <- decadesMeanFinal %>% group_by(decade) %>% summarise_at(.vars = c("co2", "methane", "nitrous_oxide"),
-                                                                                .funs = c("mean", "sd"))
+  decadeMeanFinalStat <- decadesMeanFinal %>% group_by(country, decade) %>% summarise_at(.vars = c("co2", "methane", "nitrous_oxide"),
+                                                                                .funs = c("mean"))
   return(decadeMeanFinalStat)
 }
 
@@ -379,7 +381,8 @@ countries <- c("Gambia", "Cameroon", "Congo", "Senegal", "Tanzania")
 Africa <- PredictEmissionsSTAT(decades, countries)
 countries <- c("Argentina", "Chile", "Mexico", "Uruguay", "Peru")
 SouthAmerica <- PredictEmissionsALL(decades, countries)
-SouthAmerica <- subset(SouthAmerica, decade >= decades)
+countries <- c("India", "China")
+Asia <- PredictEmissionsALL(decades, countries)
 
 
 
