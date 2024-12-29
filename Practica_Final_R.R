@@ -380,9 +380,11 @@ NorthEurope <- PredictEmissionsSTAT(decades, countries)
 countries <- c("Gambia", "Cameroon", "Congo", "Senegal", "Tanzania")
 Africa <- PredictEmissionsSTAT(decades, countries)
 countries <- c("Argentina", "Chile", "Mexico", "Uruguay", "Peru")
-SouthAmerica <- PredictEmissionsALL(decades, countries)
+SouthAmerica <- PredictEmissionsSTAT(decades, countries)
 countries <- c("India", "China")
-Asia <- PredictEmissionsALL(decades, countries)
+Asia <- PredictEmissionsSTAT(decades, countries)
+countries <- c("Vietnam", "Philippines", "Thailand")
+EastAsia <- PredictEmissionsSTAT(decades, countries)
 
 
 
